@@ -1,16 +1,49 @@
 var gl = {};
 
 
+function buildShader(source, type)
+{
+	var shader = gl.createShader(type);
+	
+	gl.shaderSource(shader, source);
+	gl.compileShader(shader);
+	
+	if(!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+	{
+		console.log(gl.getShaderInfoLog(shader));
+		return undefined;
+	}
+	
+	return shader;
+}
+
 function loadShaders()
 {
-	ajax.get("shaders/fragment.fsh", {}, function(source)
-	{
-		console.log(source);
-	});
 	
 	ajax.get("shaders/vertex.vsh", {}, function(source)
 	{
-		console.log(source);
+		var shader = buildShader(source, gl.VERTEX_SHADER);
+		if(shader != undefined)
+		{
+			console.log("Vertex shader successfully build.");
+		}
+		else
+		{
+			console.log("Failed to build vertex shader.");
+		}
+	});
+	
+	ajax.get("shaders/fragment.fsh", {}, function(source)
+	{
+		var shader = buildShader(source, gl.FRAGMENT_SHADER);
+		if(shader != undefined)
+		{
+			console.log("Fragment shader successfully build.");
+		}
+		else
+		{
+			console.log("Failed to build fragment shader.");
+		}
 	});
 	
 }
