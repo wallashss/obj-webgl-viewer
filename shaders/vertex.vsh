@@ -13,10 +13,11 @@ varying vec3 vNormal;
 
 void main (void)
 {
-    gl_Position = viewProjection * vec4(position, 1);
+    gl_Position =  vec4(position, 1.0);
 
     currentColor = color;
 	
 	vPosition = position;
 	vNormal = normal;
+	// vNormal = vec3(1, 0, 0);
 }
