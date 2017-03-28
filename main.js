@@ -75,10 +75,10 @@ function loadShaders()
 		
 		var normalVertex = gl.getAttribLocation(shaderProgram, "normal");
 		gl.enableVertexAttribArray(normalVertex);
-		// var normalVertex = undefined;
 		
 		var viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
-		var colorUniform = gl.getUniformLocation(shaderProgram, "color");	
+		var colorUniform = gl.getUniformLocation(shaderProgram, "color");
+		
 		
 		return {program: shaderProgram,
 				positionVertex: positionVertex,
@@ -129,6 +129,16 @@ function draw()
 	gl.useProgram(shaderProgram);
 	gl.enableVertexAttribArray(shaderProgram.positionVertex);
 	
+	var mvp = mat4.create();
+	var mv = mat4.create();
+	var p = mat4.create();
+	mat4.identity(mvp);
+	mat4.identity(mv);
+	mat4.identity(p);
+	mat4.translate(mv, [-0.5, -0.5, -7]);
+	mat4.perspective(45, canvas.width / canvas.height, 0.1, 100.0, p);
+	mat4.multiply(p, mv, mvp);
+	
 	for(var i = 0; i < batches.length; i++)
 	{
 		var b = batches[i];
@@ -139,10 +149,11 @@ function draw()
 		gl.bindBuffer(gl.ARRAY_BUFFER, b.verticesBufferId);
 		gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, vertexSize, 0);
 		
-		// gl.bindBuffer(gl.ARRAY_BUFFER, b.pa);
-		gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, vertexSize, 3 * 4); // 3 components x 4 bytes per float	
-		
+		gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, vertexSize, 3 * 4); // 3 components x 4 bytes per float		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
+		
+		gl.uniform4fv(mainShader.colorUniform, [1, 0, 0, 1]);
+		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
 		
 		gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
 	}
@@ -170,8 +181,8 @@ function init()
 	console.log("Init complete");
 	
 	addObject( [
-         0.5,  0.0,  0.0, 	1.0, 0.0, 0.0,
-         0.0, 0.5,  0.0,	0.0, 1.0, 0.0,
+         1.0,  0.0,  0.0, 	0.0, 0.0, 1.0,
+         0.0, 1.0,  0.0,	0.0, 0.0, 1.0,
          0.0, 0.0,  0.0,	0.0, 0.0, 1.0
     ], [0, 1, 2]);
 	window.setInterval(draw, dt)
