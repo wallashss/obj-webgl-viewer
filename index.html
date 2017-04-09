@@ -7,11 +7,20 @@
 		<script type="text/javascript" src="glMatrix-0.9.5.min.js" ></script>
 		<script type="text/javascript" src="ajax.js" ></script>
 		<script type="text/javascript" src="main.js" ></script>
+		
+		<link type="text/css" rel="stylesheet" href="style.css"/>
 	</head>
 	<body>
-	<div id="main">
-		<canvas id="canvas" style="border: none;" width="500" height="500">
-		</canvas>
-	</div>
+		<div id="main">
+			<canvas id="canvas" >
+			</canvas>
+		</div>
+		<div id="view_controller">
+			Upload obj.
+			<input type="file" id="file">
+		</div>
+		<section>
+		<script type="text/javascript" src="objreader.js" ></script>
+		</section>
 	</body>
 </html>

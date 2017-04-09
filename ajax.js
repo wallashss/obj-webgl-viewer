@@ -73,7 +73,7 @@ function Ajax()
 		{
 			query.push(encodeURIComponent(key) + '=' + encodeURIComponent(data[key]));
 		}
-		ajax.send(url + (query.length ? '?' + query.join('&') : ''), callback, 'GET', null, false, async)
+		ajax.send(url + (query.length ? '?' + query.join('&') : ''), callback, 'GET', null, false, async);
 	};
 
 	ajax.post = function (url, data, callback, async)

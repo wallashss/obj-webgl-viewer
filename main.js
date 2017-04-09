@@ -76,13 +76,16 @@ function loadShaders()
 		var normalVertex = gl.getAttribLocation(shaderProgram, "normal");
 		gl.enableVertexAttribArray(normalVertex);
 		
+		var texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
+		gl.enableVertexAttribArray(texcoord);
+		
 		var viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
 		var colorUniform = gl.getUniformLocation(shaderProgram, "color");
-		
 		
 		return {program: shaderProgram,
 				positionVertex: positionVertex,
 				normalVertex: normalVertex,
+				texcoord: texcoord,
 				viewProjectionUniform: viewProjectionUniform,
 				colorUniform: colorUniform
 				};
@@ -135,7 +138,7 @@ function draw()
 	mat4.identity(mvp);
 	mat4.identity(mv);
 	mat4.identity(p);
-	mat4.translate(mv, [-0.5, -0.5, -7]);
+	mat4.translate(mv, [-0.5, -0.5, -7.0]);
 	mat4.perspective(45, canvas.width / canvas.height, 0.1, 100.0, p);
 	mat4.multiply(p, mv, mvp);
 	
@@ -143,14 +146,16 @@ function draw()
 	{
 		var b = batches[i];
 		
-		// Vertex Size = 2 (vertex & normal) * 3 components (x, y, z) * 4 bytes (float)
-		var vertexSize = 2 * 3 * 4;
+		// Vertex Size = (2 * (vertex & normal) + 2 * nom) * 3 components (x, y, z) * 4 bytes (float)
+		var vertexSize = (3 + 3 + 2) * 4;
 		
 		gl.bindBuffer(gl.ARRAY_BUFFER, b.verticesBufferId);
 		gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, vertexSize, 0);
-		
 		gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, vertexSize, 3 * 4); // 3 components x 4 bytes per float		
+		gl.vertexAttribPointer(mainShader.texcoord, 2, gl.FLOAT, false, vertexSize, 3 * 4 + 3 * 4);
+		
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
+		
 		
 		gl.uniform4fv(mainShader.colorUniform, [1, 0, 0, 1]);
 		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
@@ -169,8 +174,12 @@ function init()
 	console.log("Begin Init");
 	var e = document.getElementById("canvas");
 	canvas.element = e;
+	let bounds = e.getBoundingClientRect();
+	console.log(bounds);
 	canvas.width = e.width;
 	canvas.height = e.height;
+
+	console.log(canvas);
 	gl = e.getContext("webgl");
 	
 	mainShader = loadShaders();
@@ -181,9 +190,9 @@ function init()
 	console.log("Init complete");
 	
 	addObject( [
-         1.0,  0.0,  0.0, 	0.0, 0.0, 1.0,
-         0.0, 1.0,  0.0,	0.0, 0.0, 1.0,
-         0.0, 0.0,  0.0,	0.0, 0.0, 1.0
+         1.0,  0.0,  0.0, 	0.0, 0.0, 1.0,		0.0, 0.0,
+         0.0, 1.0,  0.0,	0.0, 0.0, 1.0,		0.0, 0.0,
+         0.0, 0.0,  0.0,	0.0, 0.0, 1.0,		0.0, 0.0
     ], [0, 1, 2]);
 	window.setInterval(draw, dt)
 }
