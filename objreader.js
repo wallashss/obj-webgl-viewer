@@ -4,35 +4,6 @@ function ObjReader()
 	let vertexRegex = /v[n|t]?\s*(\-?\d+\.?\d*)\s*(\-?\d+\.?\d*)\s*(\-?\d+\.?\d*)/g;
 	let trianglesRegex = /f\s*((\d*)(\/(\d*)?\/(\d*)?)?)\s*((\d*)(\/(\d*)?\/(\d*)?)?)\s*((\d*)(\/(\d*)?\/(\d*)?)?)\s*((\d*)(\/(\d*)?\/(\d*)?)?)?/g;
 	
-	let objUploader = document.getElementById("file");
-	
-	objUploader.addEventListener("change", function(e)
-	{
-		let files = e.target.files;
-		
-		if(files.length > 0)
-		{
-			let file = files[0];		
-			let reader = new FileReader();
-			
-			reader.onload = function(e)
-			{
-				self.readObjects(e.target.result);
-				// let str = e.target.result;
-				// let lines  = str.split("\n");
-				// for(let i = 0; i < lines.length; i++)
-				// {
-					// console.log(lines[i]);
-				// }
-			};
-			
-			reader.readAsText(file);
-		}
-		
-	});
-	
-	
-	
 	let _tesselateObject = function(vertices, normals, texcoords, faces)
 	{
 		let needcalculateNormals = false;
@@ -235,15 +206,9 @@ function ObjReader()
 				
 			}
 		}
-		
-		
-		let obj = _tesselateObject(vertices, normals, texcoords, faces);
-		console.log(obj);
-		
-		addObject(obj.vertices, obj.elements);
+		return _tesselateObject(vertices, normals, texcoords, faces);
 	}
 	
 }
 
 
-var objreader = new ObjReader();
