@@ -26,3 +26,9 @@
 	color: #DDD;
 	border-radius: 2px;
 }
+
+#view_controller span
+{
+	display: block;
+	margin: 5px;
+}

@@ -12,10 +12,16 @@ function Renderer()
 				  center: undefined, 
 				  up: undefined};
 	var batches = [];
+	var textureMap = {};
 	var canvas = {width: 0, 
 				  height: 0, 
 				  element: undefined};
-	var model = mat4.create();
+	
+	this.translation = vec3.create();
+	this.scale = vec3.fromValues(1.0, 1.0, 1.0);
+	this.rotation = mat4.create();
+	
+	var isAnimating = false;
 	
 	var lightPosition = vec3.fromValues(0, 2, -10);
 	
@@ -67,7 +73,7 @@ function Renderer()
 		}, false);
 		if( vertexShader != undefined && fragmentShader != undefined)
 		{
-			var shaderProgram = gl.createProgram();
+			let shaderProgram = gl.createProgram();
 			gl.attachShader(shaderProgram, vertexShader);
 			gl.attachShader(shaderProgram, fragmentShader);
 			gl.linkProgram(shaderProgram);
@@ -78,20 +84,23 @@ function Renderer()
 			}
 			gl.useProgram(shaderProgram);
 			
-			var positionVertex = gl.getAttribLocation(shaderProgram, "position");
+			let positionVertex = gl.getAttribLocation(shaderProgram, "position");
 			gl.enableVertexAttribArray(positionVertex);
 			
-			var normalVertex = gl.getAttribLocation(shaderProgram, "normal");
+			let normalVertex = gl.getAttribLocation(shaderProgram, "normal");
 			gl.enableVertexAttribArray(normalVertex);
 			
-			var texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
+			let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
 			gl.enableVertexAttribArray(texcoord);
 			
 			let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
+			let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
 			let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
 			let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
-			let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
-			var colorUniform = gl.getUniformLocation(shaderProgram, "color");
+			let colorUniform = gl.getUniformLocation(shaderProgram, "color");
+			let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
+			let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
+			
 			
 			
 			return {program: shaderProgram,
@@ -102,7 +111,9 @@ function Renderer()
 					modelViewUniform: modelViewUniform,
 					normalMatrixUniform: normalMatrixUniform,
 					lightPositionUniform: lightPositionUniform,
-					colorUniform: colorUniform
+					colorUniform: colorUniform,
+					useTextureUniform: useTextureUniform,
+					texSamplerUniform : texSamplerUniform
 					};
 		}
 		else
@@ -121,7 +132,7 @@ function Renderer()
 		return newBufferId;
 	}
 
-	this.addObject = function(vertices, elements)
+	this.addObject = function(vertices, elements, textureName)
 	{
 		var verticesBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
@@ -134,10 +145,31 @@ function Renderer()
 		
 		batches.push({verticesBufferId: verticesBufferId,
 				elementsBufferId: elementsBufferId,
-				count: elements.length});
+				count: elements.length,
+				textureName: textureName});
 				
 		self.draw();
 	}
+	
+	this.addTexture = function(textureName, texture)
+	{
+		let textureId = gl.createTexture();
+		// neheTexture.image = new Image();
+		// neheTexture.image.onload = function() {
+		  // handleLoadedTexture(neheTexture)
+		// }
+		gl.bindTexture(gl.TEXTURE_2D, textureId);
+		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.bindTexture(gl.TEXTURE_2D, null);
+		
+		textureMap[textureName] = textureId;
+		
+		self.draw();
+	}
+	
 	this.setInitialCamera = function()
 	{
 		camera.eye = vec3.fromValues(0, 2, -10);
@@ -147,8 +179,17 @@ function Renderer()
 
 	this.draw = function()
 	{
+		// Clear screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		
+		
+		if(batches.length == 0)
+		{
+			return;
+		}
+		
+		// Matrices
+		let m = mat4.create();
 		let v = mat4.create();
 		let p = mat4.create();
 		let mv = mat4.create();
@@ -163,8 +204,17 @@ function Renderer()
 		mat4.lookAt(v, camera.eye, camera.center, camera.up);
 		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100.0);
 		
-		mat4.rotateY(model, model, Math.PI * 0.01);
-		mat4.multiply(mv, v, model);
+		
+		// Update rotation by animation...
+		
+		// if(!isAnimating)
+		// {
+		// }
+		mat4.rotateY(self.rotation, self.rotation, Math.PI * 0.01);
+		
+		mat4.fromScaling(m, self.scale);
+		mat4.multiply(m, self.rotation, m);
+		mat4.multiply(mv, v, m);
 		mat4.multiply(mvp, p, mv);
 
 		// Normal matrix
@@ -199,7 +249,24 @@ function Renderer()
 			gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
 			gl.uniform3fv(mainShader.lightPositionUniform, eyeLightPosition);
 			
+			if(b.textureName != undefined && textureMap.hasOwnProperty(b.textureName))
+			{
+				gl.activeTexture(gl.TEXTURE0);
+				gl.uniform1f(mainShader.useTextureUniform, 1.0);
+				gl.bindTexture(gl.TEXTURE_2D, textureMap[b.textureName]);
+				gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+			}
+			else
+			{
+				gl.uniform1f(mainShader.useTextureUniform, 0.0);
+			}
+			
 			gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
+			
+			if(b.textureName != undefined)
+			{
+				gl.bindTexture(gl.TEXTURE_2D, null);
+			}
 		}
 	}
 
@@ -234,9 +301,9 @@ function Renderer()
 		console.log("Init complete");
 		
 		// self.addObject( [
-			 // 1.0,  0.0,  0.0, 	1.0, 0.0, 0.0,		0.0, 0.0,
-			 // 0.0, 1.0,  0.0,	0.0, 1.0, 0.0,		0.0, 0.0,
-			 // 0.0, 0.0,  0.0,	0.0, 0.0, 1.0,		0.0, 0.0
+			 // 1.0,  0.0,  0.0, 	0.0, 0.0, -1.0,		0.0, 0.0,
+			 // 0.0, 1.0,  0.0,	0.0, 0.0, -1.0,		0.0, 0.0,
+			 // 0.0, 0.0,  0.0,	0.0, 0.0, -1.0,		0.0, 0.0
 		// ], [0, 1, 2]);
 		
 		gl.enable(gl.DEPTH_TEST);
@@ -244,9 +311,27 @@ function Renderer()
 		// window.setInterval(self.draw, dt)
 	}
 	
-	this.animate = function()
+	this.startAnimation = function()
 	{
-		window.setInterval(self.draw, dt);
+		// animator = window.setInterval(self.draw, dt);
+		
+		isAnimating = true;
+		var anim = function()
+		{
+			if(isAnimating)
+			{
+				self.draw();
+				window.requestAnimationFrame(anim);
+			}
+		};
+		
+		anim();
+		
+	}
+	
+	this.stopAnimation = function()
+	{
+		isAnimating =  false;
 	}
 	
 }

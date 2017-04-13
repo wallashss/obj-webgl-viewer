@@ -7,7 +7,7 @@ function ObjReader()
 	let _tesselateObject = function(vertices, normals, texcoords, faces)
 	{
 		let needcalculateNormals = false;
-		let hasTexcoords = true;
+		let hasTexcoords = false;
 		
 		let finalVertices = [];
 		let elements = [];
@@ -92,13 +92,14 @@ function ObjReader()
 					// Texcoord
 					if(t != undefined)
 					{
+						hasTexcoords = true;
 						let tex = texcoords[t-1];
 						finalVertices.push(tex.u);
 						finalVertices.push(tex.v);
 					}
 					else
 					{
-						hasTexcoords = false
+						
 						finalVertices.push(0.0);
 						finalVertices.push(0.0);
 					}
