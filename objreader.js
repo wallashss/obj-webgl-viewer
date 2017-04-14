@@ -142,6 +142,7 @@ function ObjReader()
 				hasTexcoords: hasTexcoords};
 	
 	}
+	
 	this.readObjects = function(str)
 	{
 		// let match = regex.exec(test);

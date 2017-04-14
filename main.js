@@ -31,6 +31,13 @@ function init()
 			reader.onload = function(e)
 			{
 				let obj = objreader.readObjects(e.target.result);
+				
+				if(obj.needcalculateNormals)
+				{
+					console.log("Calculating normals...");
+					calculateNormals(obj.vertices, obj.elements);
+				}
+				
 				if(obj.hasTexcoords)
 				{
 					renderer.addObject(obj.vertices, obj.elements, "default");
