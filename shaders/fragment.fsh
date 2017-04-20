@@ -30,4 +30,5 @@ void main(void)
 		vec4 texel = texture2D(texSampler, vTexcoord);
 		gl_FragColor = vec4(illumination * currentColor.rgb * texel.rgb, currentColor.a);
 	}
+	
 }
