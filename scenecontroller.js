@@ -7,16 +7,15 @@ function SceneController()
                     max: {x: -Number.MAX_VALUE, 
                          y: -Number.MAX_VALUE,
                          z: -Number.MAX_VALUE}};
-    this.addMesh = function(mesh)
+    this.addMesh = function(vertices, verticeSize)
     {
-        let length = mesh.vertices.length / 8;
+        let length = vertices.length / verticeSize;
         for(let i = 0; i < length; i++)
         {
-            let x = mesh.vertices[i*8];
-            let y = mesh.vertices[i*8+1];
-            let z = mesh.vertices[i*8+2];
+            let x = vertices[i*verticeSize];
+            let y = vertices[i*verticeSize+1];
+            let z = vertices[i*verticeSize+2];
         
-            
             if(self.bounds.min.x > x)
             {
                 self.bounds.min.x = x;
