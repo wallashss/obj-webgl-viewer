@@ -25,6 +25,9 @@ function init()
 	});
 	
 	
+	// Scene Controller
+	let sceneController = new SceneController();
+	
 	// Init obj uploader
 	let objUploader = document.getElementById("obj_file");
 		
@@ -47,8 +50,10 @@ function init()
 				{
 					console.log("Calculating normals...");
 					calculateNormals(obj.vertices, obj.elements);
+					console.log("Done.");
 				}
 				
+				sceneController.addMesh(obj);
 				if(obj.hasTexcoords)
 				{
 					renderer.addObject(obj.vertices, obj.elements, "default");
@@ -57,6 +62,15 @@ function init()
 				{
 					renderer.addObject(obj.vertices, obj.elements);
 				}
+				
+				let size =  sceneController.getSize();
+				let center = sceneController.getCenter();
+				let eye = vec3.fromValues(center[0], center[1], center[2] - size[2] - 1);
+				let up = vec3.fromValues(0.0, 1.0, 0.0);
+				
+				let factor = 2.0;
+
+				cameraController.setCamera(eye, center, up);
 			};
 			
 			reader.readAsText(file);

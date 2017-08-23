@@ -45,6 +45,10 @@ function CameraController()
 		let v = mat4.create();
 		mat4.lookAt(v, eye, center, up);
 		manipulator.setViewMatrix(v);
+		
+		state.pivot = vec3.clone(center);
+		state.worldUp = vec3.clone(up);
+		
 		forceDraw = true;
 	}
 	

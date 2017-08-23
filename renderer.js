@@ -193,7 +193,7 @@ function Renderer()
 		
 		// Model view projection
 		v = _viewMatrix;
-		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100.0);
+		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100000.0);
 		
 		mat4.fromScaling(m, self.scale);
 		mat4.multiply(m, self.rotation, m);
@@ -212,7 +212,7 @@ function Renderer()
 		
 		for(var i = 0; i < batches.length; i++)
 		{
-			var b = batches[i];
+			let b = batches[i];
 			
 			// Vertex Size = (2 * (vertex & normal) + 2 * nom) * 3 components (x, y, z) * 4 bytes (float)
 			var vertexSize = (3 + 3 + 2) * 4;
@@ -296,5 +296,10 @@ function Renderer()
 	this.setViewMatrix = function(viewMatrix)
 	{
 		_viewMatrix = mat4.clone(viewMatrix);
+	}
+	
+	this.setScale = function(newScale)
+	{
+		self.scale = vec3.clone(newScale);
 	}
 }
