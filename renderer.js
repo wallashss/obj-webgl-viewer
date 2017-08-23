@@ -135,12 +135,16 @@ function Renderer()
 		return newBufferId;
 	}
 
-	this.addObject = function(vertices, elements, textureName)
+	this.addObject = function(vertices, elements, color, textureName)
 	{
 		var verticesBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);	
 		
+		if(!color)
+		{
+			color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
+		}
 		
 		var elementsBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsBufferId);
@@ -149,6 +153,7 @@ function Renderer()
 		batches.push({verticesBufferId: verticesBufferId,
 				elementsBufferId: elementsBufferId,
 				count: elements.length,
+				color: color,
 				textureName: textureName});
 				
 		self.draw();
@@ -159,6 +164,11 @@ function Renderer()
 		var verticesBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);	
+		
+		if(!color)
+		{
+			color = vec4.fromValues(1.0, 1.0, 1.0, 1.0);
+		}
 		
 		lines.push({verticesBufferId: verticesBufferId,
 					count: vertices.length / 3,
@@ -223,7 +233,7 @@ function Renderer()
 		var shaderProgram = mainShader.program;
 		gl.useProgram(shaderProgram);
 		// gl.enableVertexAttribArray(shaderProgram.positionVertex);	
-		gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
+		// gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
 		gl.uniform1f(mainShader.unlitUniform, 0.0);
 		gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
 		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
@@ -254,6 +264,7 @@ function Renderer()
 			else
 			{
 				gl.uniform1f(mainShader.useTextureUniform, 0.0);
+				gl.uniform4fv(mainShader.colorUniform, b.color);
 			}
 			
 			gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
