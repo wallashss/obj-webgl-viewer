@@ -16,7 +16,7 @@ function CameraController()
 				angularVelocity: 0.0,
 				zoomIntensity: 0.0,
 				maximumZoom: 0.0};
-	
+	let forceDraw = false;
 	
 	this.rotate = function(yawIntensity, pitchIntensity)
 	{
@@ -31,6 +31,7 @@ function CameraController()
 	
 	this.setViewMatrix = function(viewMatrix)
 	{
+		forceDraw = true;
 		manipulator.setViewMatrix(viewMatrix);
 	}
 	
@@ -44,6 +45,7 @@ function CameraController()
 		let v = mat4.create();
 		mat4.lookAt(v, eye, center, up);
 		manipulator.setViewMatrix(v);
+		forceDraw = true;
 	}
 	
 						 
@@ -106,14 +108,20 @@ function CameraController()
 			let dt = timer.elapsedTime();
 			if(drawcallback)
 			{
-				if(manipulator.update(dt, state))
+				if(manipulator.update(dt, state) || forceDraw)
 				{
 					drawcallback(manipulator.getViewMatrix(), dt);
+					forceDraw = false;
 				}
 			}
 			window.requestAnimationFrame(frameCallback);
 			timer.restart();
 		};
+		
+		if(drawcallback)
+		{
+			drawcallback(manipulator.getViewMatrix(), 0);
+		}
 		
 		frameCallback();
 	}
