@@ -4,9 +4,11 @@ function CameraController()
 {
 	var self = this;
 	let examineManipulator = new Examine();
+	let flyManipulator = new Fly();
 	
-	let manipulator = examineManipulator;
-	
+// 	let manipulator = flyManipulator;
+// 	let manipulator = examineManipulator;
+	let manipulator = null;
 	
 	let mouseState = {x: 0, y: 0,
 						 mousePress: false};
@@ -15,8 +17,19 @@ function CameraController()
 				pivot: vec3.fromValues(0.0, 0.0, 0.0),
 				angularVelocity: 0.0,
 				zoomIntensity: 0.0,
-				maximumZoom: 0.0};
+				maximumZoom: 0.0,
+				velocity: vec3.fromValues(0.0, 0.0, 0.0),
+				forward: 0, backward: 0,
+				left: 0, right: 0,
+				up: 0, down: 0};
 	let forceDraw = false;
+	
+	let velocity = 1.0;
+	let velocityScale = 1.0;
+	
+	let manipulatorType = 0;
+	let EXAMINE_MANIPULATOR_TYPE = 0;
+	let FLY_MANIPULATOR_TYPE = 1;	
 	
 	this.rotate = function(yawIntensity, pitchIntensity)
 	{
@@ -52,6 +65,31 @@ function CameraController()
 		forceDraw = true;
 	}
 	
+	this.setFlyMode = function()
+	{
+		manipulatorType = FLY_MANIPULATOR_TYPE;
+	
+		if(manipulator)
+		{
+			let viewMatrix = manipulator.getViewMatrix();
+			flyManipulator.setViewMatrix(viewMatrix);
+			flyManipulator.applyRestrictions(state.worldUp);
+		}
+		manipulator = flyManipulator;
+		
+	}
+	
+	this.setExamineMode = function()
+	{
+		manipulatorType = EXAMINE_MANIPULATOR_TYPE;
+		
+		if(manipulator)
+		{
+			let viewMatrix = manipulator.getViewMatrix();
+			examineManipulator.setViewMatrix(viewMatrix);
+		}
+		manipulator = examineManipulator;
+	}
 						 
 	this.installCamera = function(element, drawcallback)
 	{
@@ -105,6 +143,48 @@ function CameraController()
 				}
 				self.zoom(delta * 0.001);
 			});
+			
+			// WORKAROUND
+			window.addEventListener("keydown", function(e)
+			{
+				if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
+				{
+					state.forward = 1.0;
+				}
+				else if(e.key === "S" || e.key === "s" || e.key === "ArrowDown")
+				{
+					state.backward = 1.0;
+				}
+				else if(e.key === "A" || e.key === "a" || e.key === "ArrowLeft")
+				{
+					state.left = 1.0;
+				}
+				else if(e.key === "D" || e.key === "d" || e.key === "ArrowRight")
+				{
+					state.right = 1.0;
+				}
+			});
+			
+			window.addEventListener("keyup", function(e)
+			{
+				if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
+				{
+					state.forward = 0.0;
+				}
+				else if(e.key === "S" || e.key === "s" || e.key === "ArrowDown")
+				{
+					state.backward = 0.0;
+				}
+				else if(e.key === "A" || e.key === "a" || e.key === "ArrowLeft")
+				{
+					state.left = 0.0;
+				}
+				else if(e.key === "D" || e.key === "d" || e.key === "ArrowRight")
+				{
+					state.right = 0.0;
+				}
+			});
+			
 		}
 		
 		let frameCallback = function()
@@ -130,19 +210,28 @@ function CameraController()
 		frameCallback();
 	}
 	
+	
+	this.setVelocity = function(newVelocity)
+	{
+		velocityScale = newVelocity;
+		state.velocity = vec3.fromValues(velocity * velocityScale, velocity * velocityScale, velocity * velocityScale);
+	}
+	
 	var init = function()
 	{
+		self.setExamineMode();
 		let eye = vec3.fromValues(0, 0, -5);
 		let center = vec3.fromValues(0, 0, 0);
 		let up = vec3.fromValues(0, 1, 0);
+		
+		let v = mat4.create();
+		mat4.lookAt(v, eye, center, up);
+		manipulator.setViewMatrix(v);
 		
 		state.pivot = vec3.clone(center);
 		state.worldUp = vec3.clone(up);
 		state.angularVelocity = 30.0;
 		state.maximumZoom = 1.0;
-		
-		let v = mat4.create();
-		mat4.lookAt(v, eye, center, up);
-		manipulator.setViewMatrix(v);
+		state.velocity = vec3.fromValues(velocity, velocity, velocity);
 	}();
 }
