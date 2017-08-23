@@ -1,5 +1,7 @@
-function calculateNormals(vertices, elements)
+function calculateNormals(vertices, elements, forceSmooth)
 {
+	forceSmooth = forceSmooth ? true : false;
+	
 	let verticeSize = 8 ; // 3 vertices, 3 normals, 2 texcoords
 	let normalsMap = {};
 	let triangleMap = {};
@@ -72,122 +74,103 @@ function calculateNormals(vertices, elements)
 	
 	// For all vertices...
 	// Note: the vertices array can increase during the processing
-	for(let i = 0; i < vertices.length / 8; i++)
-	{	
-		let normals = normalsMap[i];
-		let triangles = triangleMap[i];
+	if(!forceSmooth)
+	{
+		for(let i = 0; i < vertices.length / 8; i++)
+		{	
+			let normals = normalsMap[i];
+			let triangles = triangleMap[i];
 		
-		let normalIdxToRemove = [];
-		let verticesToReplace = [];
+			let normalIdxToRemove = [];
+			let verticesToReplace = [];
 		
 
-		let isRedundant = {};
-		// Searching for flat surfaces
-		for(let j =0; j < normals.length -1; j++)
-		{
-			let isRemoved = false;
-			
-			// Skip redundant idx
-			if(isRedundant.hasOwnProperty(j))
+			let isRedundant = {};
+			// Searching for flat surfaces
+			for(let j =0; j < normals.length -1; j++)
 			{
-				let redudantIdx = isRedundant[j];
-				let idxToRemove = normalIdxToRemove.indexOf(redudantIdx);
-				if(idxToRemove >= 0)
+				let isRemoved = false;
+			
+				// Skip redundant idx
+				if(isRedundant.hasOwnProperty(j))
 				{
-					normalIdxToRemove.push(j);
-					verticesToReplace.push(verticesToReplace[idxToRemove]);
+					let redudantIdx = isRedundant[j];
+					let idxToRemove = normalIdxToRemove.indexOf(redudantIdx);
+					if(idxToRemove >= 0)
+					{
+						normalIdxToRemove.push(j);
+						verticesToReplace.push(verticesToReplace[idxToRemove]);
+					}
+					continue;
 				}
-				continue;
-			}
-			for(let k = j+1; k < normals.length; k++)
-			{
-				let angle = dot(normals[j], normals[k]);
-				
-				// Check if angle if normals are near perpendicular
-				if(angle < 0.2 && !isRemoved)
+				for(let k = j+1; k < normals.length; k++)
 				{
-					// Split vertex 
-					let v0 = i;
-					let v1 = triangles[j][0];
-					let v2 = triangles[j][1];
+					let angle = dot(normals[j], normals[k]);
+				
+					// Check if angle if normals are near perpendicular
+					if(angle < 0.2 && !isRemoved)
+					{
+						// Split vertex 
+						let v0 = i;
+						let v1 = triangles[j][0];
+						let v2 = triangles[j][1];
 					
-					let newIdx = vertices.length / 8;
+						let newIdx = vertices.length / 8;
 					
-					// Position
-					vertices.push(vertices[i * verticeSize+0]);
-					vertices.push(vertices[i * verticeSize+1]);
-					vertices.push(vertices[i * verticeSize+2]);
+						// Position
+						vertices.push(vertices[i * verticeSize+0]);
+						vertices.push(vertices[i * verticeSize+1]);
+						vertices.push(vertices[i * verticeSize+2]);
 		
-					// Normal
-					vertices.push(normals[j].x);
-					vertices.push(normals[j].y);
-					vertices.push(normals[j].z);
+						// Normal
+						vertices.push(normals[j].x);
+						vertices.push(normals[j].y);
+						vertices.push(normals[j].z);
 			
-					// Tex coord
-					vertices.push(vertices[i * verticeSize+6]);
-					vertices.push(vertices[i * verticeSize+7]);
+						// Tex coord
+						vertices.push(vertices[i * verticeSize+6]);
+						vertices.push(vertices[i * verticeSize+7]);
 					
-					normalsMap[newIdx] = [normals[j]];
-					triangleMap[newIdx] = [[v1, v2]];
-					elementOffset[newIdx] = elementOffset[i];
+						normalsMap[newIdx] = [normals[j]];
+						triangleMap[newIdx] = [[v1, v2]];
+						elementOffset[newIdx] = elementOffset[i];
 					
-					normalIdxToRemove.push(j);
-					verticesToReplace.push(newIdx);
+						normalIdxToRemove.push(j);
+						verticesToReplace.push(newIdx);
 
-					isRemoved = true;
-				}
-				else if(angle == 1)
-				{
-					console.log(normals[j]);
-					console.log(normals[k]);
-					console.log("ignore!" + j + " " + k);
-					isRedundant[k] = j;
+						isRemoved = true;
+					}
+					else if(angle == 1)
+					{
+						isRedundant[k] = j;
+					}
 				}
 			}
-		}
-		
-		// Check if redundant index need to be updated
-	// 	for(let key in isRedundant)
-// 		{
-// 			if(isRedundant.hasOwnProperty(key))
-// 			{
-// 				let redundantIdx = isRedundant[key];
-// 				let idx = normalIdxToRemove.indexOf(redundantIdx);
-// 				if(idx >= 0)
-// 				{
-// 					normalIdxToRemove.push(key);
-// 					verticesToReplace.push(verticesToReplace[idx]);
-// 					
-// 					normalsMap[verticesToReplace[idx]].push(normals[key]);
-// // 					triangleMap[newIdx] = [v1, v2];
-// // 					elementOffset[newIdx] = elementOffset[i];
-// 				}
-// 			}
-// 		}
-		
 				
-		// Update elements array with the new vertices
-		for(let j =0; j < verticesToReplace.length; j++)
-		{
-			let k = normalIdxToRemove[j];
-			let elOffset = elementOffset[i][k]*3;			
-			for(let l = 0 ; l < 3; l++)
+			// Update elements array with the new vertices
+			for(let j =0; j < verticesToReplace.length; j++)
 			{
-				if(elements[elOffset+l] == i)
+				let k = normalIdxToRemove[j];
+				let elOffset = elementOffset[i][k]*3;			
+				for(let l = 0 ; l < 3; l++)
 				{
-					elements[elOffset+l] = verticesToReplace[j];
-					break;
+					if(elements[elOffset+l] == i)
+					{
+						elements[elOffset+l] = verticesToReplace[j];
+						break;
+					}
 				}
 			}
-		}
 		
-		// Remove old normals
-		for(let j = normalIdxToRemove.length - 1; j >= 0; j--)
-		{
-			normals.splice(normalIdxToRemove[j], 1);
-		}
+			// Remove old normals
+			for(let j = normalIdxToRemove.length - 1; j >= 0; j--)
+			{
+				normals.splice(normalIdxToRemove[j], 1);
+			}
 		
+		}
 	}
+	
 		
 	let verticeCount = vertices.length / 8;
 	
@@ -210,9 +193,6 @@ function calculateNormals(vertices, elements)
 		vertices[i*verticeSize+3] = normal.x;
 		vertices[i*verticeSize+3+1] = normal.y;
 		vertices[i*verticeSize+3+2] = normal.z;
-	}
-	
-	console.log(vertices);
-	
+	}	
 	
 }
