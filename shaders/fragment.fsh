@@ -13,7 +13,7 @@ void main(void)
 	
 	// Ambient
 	vec3 ambient = vec3(0.1);
-	float d = max(0.0, dot(vNormal, lightDir));
+	float d = abs(dot(vNormal, lightDir));
 	
 	// Diffuse
 	vec3 diffuse = vec3(d);
