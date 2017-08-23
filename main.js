@@ -75,7 +75,7 @@ function init()
 				if(obj.needcalculateNormals)
 				{
 					console.log("Calculating normals...");
-					calculateNormals(obj.vertices, obj.elements);
+					calculateNormals(obj.vertices, obj.elements, true);
 					console.log("Done.");
 				}
 				

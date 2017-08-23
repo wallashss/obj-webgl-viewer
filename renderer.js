@@ -208,8 +208,13 @@ function Renderer()
 		// Bind shader
 		var shaderProgram = mainShader.program;
 		gl.useProgram(shaderProgram);
-		gl.enableVertexAttribArray(shaderProgram.positionVertex);	
-		
+		// gl.enableVertexAttribArray(shaderProgram.positionVertex);	
+		gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
+		gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
+		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
+		gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
+		gl.uniform3fv(mainShader.lightPositionUniform, eyeLightPosition);
+			
 		for(var i = 0; i < batches.length; i++)
 		{
 			let b = batches[i];
@@ -224,11 +229,7 @@ function Renderer()
 			
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
 			
-			gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
-			gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
-			gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
-			gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
-			gl.uniform3fv(mainShader.lightPositionUniform, eyeLightPosition);
+			
 			
 			if(b.textureName != undefined && textureMap.hasOwnProperty(b.textureName))
 			{
