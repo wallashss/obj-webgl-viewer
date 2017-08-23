@@ -9,10 +9,21 @@ var renderer = undefined;
 function init()
 {
 	let viewController = document.getElementById("view_controller");
+	
 	// Init renderer	
 	let canvas = document.getElementById("canvas");
 	renderer = new Renderer();
 	renderer.load(canvas);
+	
+	
+	// Initialize cameracontroller
+	let cameraController = new CameraController();
+	cameraController.installCamera(canvas, function(viewMatrix, dt)
+	{
+		renderer.setViewMatrix(viewMatrix);
+		renderer.draw(dt);
+	});
+	
 	
 	// Init obj uploader
 	let objUploader = document.getElementById("obj_file");
@@ -53,7 +64,7 @@ function init()
 	});
 	
 
-	// Init 
+	// Upload texture
 	let imgUploader = document.getElementById("img_file");
 	
 	imgUploader.addEventListener("change", function(e)
@@ -80,19 +91,19 @@ function init()
 		reader.readAsDataURL(file);
 	});
 	
-	let button = document.getElementById("animate_button");
-	button.addEventListener("click", function()
-	{
-		// UGLIEST EVER =D
-		if(button.value == "Start")
-		{
-			button.value = "Stop";
-			renderer.startAnimation();
-		}
-		else
-		{
-			button.value = "Start"; // =DDDDD
-			renderer.stopAnimation();
-		}
-	});
+	// let button = document.getElementById("animate_button");
+// 	button.addEventListener("click", function()
+// 	{
+// 		// UGLIEST EVER =D
+// 		if(button.value == "Start")
+// 		{
+// 			button.value = "Stop";
+// 			renderer.startAnimation();
+// 		}
+// 		else
+// 		{
+// 			button.value = "Start"; // =DDDDD
+// 			renderer.stopAnimation();
+// 		}
+// 	});
 }

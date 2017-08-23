@@ -8,9 +8,6 @@ function Renderer()
 {
 	var self = this;
 	var mainShader = undefined;
-	var camera = {eye: undefined, 
-				  center: undefined, 
-				  up: undefined};
 	var batches = [];
 	var textureMap = {};
 	var canvas = {width: 0, 
@@ -24,6 +21,9 @@ function Renderer()
 	var isAnimating = false;
 	
 	var lightPosition = vec3.fromValues(0, 2, -10);
+	
+	
+	var _viewMatrix = mat4.create();
 	
 	this.buildShader = function(source, type)
 	{
@@ -169,19 +169,13 @@ function Renderer()
 		
 		self.draw();
 	}
-	
-	this.setInitialCamera = function()
-	{
-		camera.eye = vec3.fromValues(0, 2, -10);
-		camera.center = vec3.fromValues(0, 0, 0);
-		camera.up = vec3.fromValues(0, 1, 0);
-	}
 
 	this.draw = function()
 	{
 		// Clear screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		
+// 		console.log(_viewMatrix);
 		
 		if(batches.length == 0)
 		{
@@ -198,19 +192,9 @@ function Renderer()
 		
 		let eyeLightPosition = vec3.create();
 		
-		self.setInitialCamera();
-		
 		// Model view projection
-		mat4.lookAt(v, camera.eye, camera.center, camera.up);
+		v = _viewMatrix;
 		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100.0);
-		
-		
-		// Update rotation by animation...
-		
-		// if(!isAnimating)
-		// {
-		// }
-		mat4.rotateY(self.rotation, self.rotation, Math.PI * 0.01);
 		
 		mat4.fromScaling(m, self.scale);
 		mat4.multiply(m, self.rotation, m);
@@ -307,31 +291,36 @@ function Renderer()
 		// ], [0, 1, 2]);
 		
 		gl.enable(gl.DEPTH_TEST);
-		self.draw();
+// 		self.draw();
 		// window.setInterval(self.draw, dt)
 	}
 	
-	this.startAnimation = function()
-	{
-		// animator = window.setInterval(self.draw, dt);
-		
-		isAnimating = true;
-		var anim = function()
-		{
-			if(isAnimating)
-			{
-				self.draw();
-				window.requestAnimationFrame(anim);
-			}
-		};
-		
-		anim();
-		
-	}
 	
-	this.stopAnimation = function()
+	this.setViewMatrix = function(viewMatrix)
 	{
-		isAnimating =  false;
+		_viewMatrix = mat4.clone(viewMatrix);
 	}
+	// this.startAnimation = function()
+// 	{
+// 		// animator = window.setInterval(self.draw, dt);
+// 		
+// 		isAnimating = true;
+// 		var anim = function()
+// 		{
+// 			if(isAnimating)
+// 			{
+// 				self.draw();
+// 				window.requestAnimationFrame(anim);
+// 			}
+// 		};
+// 		
+// 		anim();
+// 		
+// 	}
+	
+// 	this.stopAnimation = function()
+// 	{
+// 		isAnimating =  false;
+// 	}
 	
 }
