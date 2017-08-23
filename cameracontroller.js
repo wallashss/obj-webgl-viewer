@@ -26,7 +26,6 @@ function CameraController()
 	
 	this.zoom = function(intensity)
 	{
-		console.log(intensity);
 		state.zoomIntensity = intensity;
 	}
 	
@@ -38,6 +37,13 @@ function CameraController()
 	this.getViewMatrix = function()
 	{
 		return manipulator.getViewMatrix();
+	}
+	
+	this.setCamera = function(eye, center, up)
+	{
+		let v = mat4.create();
+		mat4.lookAt(v, eye, center, up);
+		manipulator.setViewMatrix(v);
 	}
 	
 						 
@@ -52,13 +58,11 @@ function CameraController()
 				mouseState.mousePress = true;
 				mouseState.x = e.clientX;
 				mouseState.y = e.clientY;
-				console.log(e);
 			});
 			
 			element.addEventListener("mouseup", function(e)
 			{
 				mouseState.mousePress = false;
-				console.log(e);
 			});
 			
 			element.addEventListener("mousemove", function(e)
@@ -104,7 +108,6 @@ function CameraController()
 			{
 				if(manipulator.update(dt, state))
 				{
-					console.log(dt);
 					drawcallback(manipulator.getViewMatrix(), dt);
 				}
 			}
@@ -127,7 +130,6 @@ function CameraController()
 		state.maximumZoom = 1.0;
 		
 		let v = mat4.create();
-		console.log(v);
 		mat4.lookAt(v, eye, center, up);
 		manipulator.setViewMatrix(v);
 	}();

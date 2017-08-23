@@ -36,10 +36,6 @@ function Examine()
             if(!epsilonEqual(state.yawIntensity, 0.0, EPSILON) || 
               !epsilonEqual(state.pitchIntensity, 0.0, EPSILON))
 			{
-                // glm::dvec3 pivot (_state->pivot[0], _state->pivot[1], _state->pivot[2]);
-//                 pivot = viewMatrix * glm::vec4(pivot.x, pivot.y, pivot.z, 1.0);
-//                 auto tPivot = glm::translate(glm::dmat4(), pivot);
-//                 auto tInvPivot = glm::translate(glm::dmat4(), -pivot);
 				let pivot = vec3.fromValues(state.pivot[0], state.pivot[0], state.pivot[0]);
                 vec3.transformMat4(pivot, pivot, viewMatrix);
                 let tPivot = mat4.create();
@@ -93,31 +89,10 @@ function Examine()
 
 				state.yawIntensity = 0.0;
 				state.pitchIntensity = 0.0;
-// 				_state->yawIntensity   = 0.0;
-// 				_state->pitchIntensity = 0.0;
 			}
 
             if(!epsilonEqual(state.zoomIntensity, 0.0, EPSILON))
 			{
-//                 glm::dmat4 invViewMatrix = glm::inverse(viewMatrix);
-// 
-//                 glm::dvec3 eye   = glm::dvec3(invViewMatrix[3][0], invViewMatrix[3][1], invViewMatrix[3][2]);
-//                 glm::dvec3 pivot = glm::dvec3(_state->pivot[0], _state->pivot[1], _state->pivot[2]);
-// 
-//                 if(!(glm::epsilonEqual(eye.x, pivot.x, EPSILON) && glm::epsilonEqual(eye.y, pivot.y, EPSILON) && glm::epsilonEqual(eye.z, pivot.z, EPSILON)))
-// 				{
-//                     glm::dvec3 t = glm::normalize(pivot - eye);
-// 
-//                     auto focusDistance = glm::distance(pivot, eye);
-//                     auto zoomTrans = focusDistance * _state->zoomIntensity;
-// 
-// 					if(focusDistance + zoomTrans > _state->maximumZoom)
-// 					{
-//                         glm::dmat4 translation = glm::translate(glm::dmat4(), t * zoomTrans);
-//                         viewMatrix = viewMatrix * translation;
-// 					}
-// 				}
-
                 let invViewMatrix = mat4.create(); 
                 mat4.invert(invViewMatrix, viewMatrix);
 
@@ -146,6 +121,8 @@ function Examine()
 			if(_isPanning)
 			{
 
+				// THis is a future pan implementation
+				
                 // glm::dmat4 projectionMatrix = glm::make_mat4(_state->projectionMatrix);
 //                 glm::dmat4 worldToScreenMatrix = projectionMatrix * viewMatrix;
 // 
@@ -187,8 +164,6 @@ function Examine()
 // 				_state->pivot[1] = newPivot[1];
 // 				_state->pivot[2] = newPivot[2];
 			}
-
-//             std::memcpy(_viewMatrix, glm::value_ptr(viewMatrix), 16 * sizeof(double));
 			_viewMatrix = mat4.clone(viewMatrix);
 
 			return true;
