@@ -20,7 +20,7 @@ function Renderer()
 	
 	var isAnimating = false;
 	
-	var lightPosition = vec3.fromValues(0, 2, -10);
+// 	var lightPosition = vec3.fromValues(0, 2, -10);
 	
 	
 	var _viewMatrix = mat4.create();
@@ -174,9 +174,7 @@ function Renderer()
 	{
 		// Clear screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-		
-// 		console.log(_viewMatrix);
-		
+				
 		if(batches.length == 0)
 		{
 			return;
@@ -190,7 +188,8 @@ function Renderer()
 		let mvp = mat4.create();
 		let normalMatrix = mat4.create();
 		
-		let eyeLightPosition = vec3.create();
+		// Light in eye space and always at camera position
+		let eyeLightPosition = vec3.fromValues(0.0, 0.0, 0.0);
 		
 		// Model view projection
 		v = _viewMatrix;
@@ -204,9 +203,7 @@ function Renderer()
 		// Normal matrix
 		mat4.invert(normalMatrix, mv);
 		mat4.transpose(normalMatrix, normalMatrix);
-		
-		// Light on eye space
-		vec3.transformMat4(eyeLightPosition, lightPosition, v);
+	
 		
 		// Bind shader
 		var shaderProgram = mainShader.program;
@@ -300,27 +297,4 @@ function Renderer()
 	{
 		_viewMatrix = mat4.clone(viewMatrix);
 	}
-	// this.startAnimation = function()
-// 	{
-// 		// animator = window.setInterval(self.draw, dt);
-// 		
-// 		isAnimating = true;
-// 		var anim = function()
-// 		{
-// 			if(isAnimating)
-// 			{
-// 				self.draw();
-// 				window.requestAnimationFrame(anim);
-// 			}
-// 		};
-// 		
-// 		anim();
-// 		
-// 	}
-	
-// 	this.stopAnimation = function()
-// 	{
-// 		isAnimating =  false;
-// 	}
-	
 }
