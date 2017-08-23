@@ -147,7 +147,15 @@ function CameraController()
 			// WORKAROUND
 			window.addEventListener("keydown", function(e)
 			{
-				if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
+				if(e.shiftKey && (e.key === "W" || e.key === "w" || e.key === "ArrowUp"))
+				{
+					state.up = 1.0;
+				}
+				else if(e.shiftKey && (e.key === "S" || e.key === "s" || e.key === "ArrowDown"))
+				{
+					state.down = 1.0;
+				}
+				else if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
 				{
 					state.forward = 1.0;
 				}
@@ -163,17 +171,20 @@ function CameraController()
 				{
 					state.right = 1.0;
 				}
+				
 			});
 			
 			window.addEventListener("keyup", function(e)
 			{
 				if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
 				{
+					state.up = 0.0;
 					state.forward = 0.0;
 				}
 				else if(e.key === "S" || e.key === "s" || e.key === "ArrowDown")
 				{
 					state.backward = 0.0;
+					state.down = 0.0;
 				}
 				else if(e.key === "A" || e.key === "a" || e.key === "ArrowLeft")
 				{

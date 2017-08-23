@@ -3,7 +3,7 @@
 function Fly()
 {
 	var _viewMatrix = mat4.create();
-	var _forwardDirection = vec3.fromValues(0.0, 0.0, 1.0);
+	var _forwardDirection = vec3.fromValues(0.0, 0.0, -1.0);
 		
 	var EPSILON = 1e-5;
 	
@@ -110,7 +110,8 @@ function Fly()
 										forward[1] * deltaS[2] + upCam[1] * deltaS[1] + right[1]*deltaS[0],
 										forward[2] * deltaS[2] + upCam[2] * deltaS[1] + right[2]*deltaS[0]);
         let translation = mat4.create();
-        mat4.translate(viewMatrix, viewMatrix, totalTrans);
+        mat4.translate(translation, translation, totalTrans);
+        mat4.multiply(viewMatrix, translation, viewMatrix);
         
         _viewMatrix = mat4.clone(viewMatrix);
 
