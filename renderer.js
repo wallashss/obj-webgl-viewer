@@ -9,6 +9,7 @@ function Renderer()
 	var self = this;
 	var mainShader = undefined;
 	var batches = [];
+	var lines = [];
 	var textureMap = {};
 	var canvas = {width: 0, 
 				  height: 0, 
@@ -99,6 +100,7 @@ function Renderer()
 			let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
 			let colorUniform = gl.getUniformLocation(shaderProgram, "color");
 			let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
+			let unlitUniform = gl.getUniformLocation(shaderProgram, "unlit");
 			let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
 			
 			
@@ -113,6 +115,7 @@ function Renderer()
 					lightPositionUniform: lightPositionUniform,
 					colorUniform: colorUniform,
 					useTextureUniform: useTextureUniform,
+					unlitUniform: unlitUniform,
 					texSamplerUniform : texSamplerUniform
 					};
 		}
@@ -151,6 +154,18 @@ function Renderer()
 		self.draw();
 	}
 	
+	this.addLines = function(vertices, color)
+	{
+		var verticesBufferId = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);	
+		
+		lines.push({verticesBufferId: verticesBufferId,
+					count: vertices.length / 3,
+					vertexSize: 3 * 4, // 3 components * 4 bytes per float
+					color: color});
+	}
+	
 	this.addTexture = function(textureName, texture)
 	{
 		let textureId = gl.createTexture();
@@ -175,7 +190,7 @@ function Renderer()
 		// Clear screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 				
-		if(batches.length == 0)
+		if(batches.length == 0 && lines.length == 0)
 		{
 			return;
 		}
@@ -204,18 +219,18 @@ function Renderer()
 		mat4.invert(normalMatrix, mv);
 		mat4.transpose(normalMatrix, normalMatrix);
 	
-		
 		// Bind shader
 		var shaderProgram = mainShader.program;
 		gl.useProgram(shaderProgram);
 		// gl.enableVertexAttribArray(shaderProgram.positionVertex);	
 		gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
+		gl.uniform1f(mainShader.unlitUniform, 0.0);
 		gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
 		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
 		gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
 		gl.uniform3fv(mainShader.lightPositionUniform, eyeLightPosition);
 			
-		for(var i = 0; i < batches.length; i++)
+		for(let i = 0; i < batches.length; i++)
 		{
 			let b = batches[i];
 			
@@ -228,8 +243,6 @@ function Renderer()
 			gl.vertexAttribPointer(mainShader.texcoord, 2, gl.FLOAT, false, vertexSize, 3 * 4 + 3 * 4);
 			
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
-			
-			
 			
 			if(b.textureName != undefined && textureMap.hasOwnProperty(b.textureName))
 			{
@@ -249,6 +262,19 @@ function Renderer()
 			{
 				gl.bindTexture(gl.TEXTURE_2D, null);
 			}
+		}
+
+		gl.uniform1f(mainShader.unlitUniform, 1.0);		
+		for(let i =0 ; i < lines.length; i++)
+		{
+			let l = lines[i];
+			
+			gl.bindBuffer(gl.ARRAY_BUFFER, l.verticesBufferId);
+			gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, l.vertexSize, 0);
+			gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, l.vertexSize, 0); // 3 components x 4 bytes per float		
+			gl.vertexAttribPointer(mainShader.texcoord, 2, gl.FLOAT, false, l.vertexSize, 0);
+			
+			gl.drawArrays(gl.LINES, 0, l.count);
 		}
 	}
 
