@@ -7,7 +7,7 @@ var dt = 1.0 / TARGET_FPS;
 function Renderer()
 {
 	var self = this;
-	var mainShader = undefined;
+	var mainShader = null;
 	var batches = [];
 	var textureMap = {};
 	var canvas = {width: 0, 
@@ -19,8 +19,7 @@ function Renderer()
 	this.rotation = mat4.create();
 	
 	var isAnimating = false;
-	
-// 	var lightPosition = vec3.fromValues(0, 2, -10);
+
 	
 	
 	var _viewMatrix = mat4.create();
@@ -43,13 +42,81 @@ function Renderer()
 
 	this.loadShaders = function()
 	{
-		var vertexShader;
-		var fragmentShader;
-		
-		ajax.get("shaders/vertex.vsh", {}, function(source)
+		let vertexShader;
+		let fragmentShader;
+
+		let linkShaders = () =>
+		{
+			// Trick to call function after async calls
+			linkShaders.pendingCount--;
+			if(linkShaders.pendingCount > 0)
+			{				
+				return;
+			}
+
+			if( vertexShader != undefined && fragmentShader != undefined)
+			{
+				let shaderProgram = gl.createProgram();
+				gl.attachShader(shaderProgram, vertexShader);
+				gl.attachShader(shaderProgram, fragmentShader);
+				gl.linkProgram(shaderProgram);
+				
+				if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
+				{
+					window.alert("Error initing shader program");
+				}
+				gl.useProgram(shaderProgram);
+				
+				let positionVertex = gl.getAttribLocation(shaderProgram, "position");
+				gl.enableVertexAttribArray(positionVertex);
+				
+				let normalVertex = gl.getAttribLocation(shaderProgram, "normal");
+				gl.enableVertexAttribArray(normalVertex);
+				
+				let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
+				gl.enableVertexAttribArray(texcoord);
+				
+				let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
+				let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
+				let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
+				let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
+				let colorUniform = gl.getUniformLocation(shaderProgram, "color");
+				let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
+				let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
+				
+				
+				
+				mainShader=  {	program: shaderProgram,
+								positionVertex: positionVertex,
+								normalVertex: normalVertex,
+								texcoord: texcoord,
+								viewProjectionUniform: viewProjectionUniform,
+								modelViewUniform: modelViewUniform,
+								normalMatrixUniform: normalMatrixUniform,
+								lightPositionUniform: lightPositionUniform,
+								colorUniform: colorUniform,
+								useTextureUniform: useTextureUniform,
+								texSamplerUniform : texSamplerUniform
+							 };
+				console.log("succesfully loaded shaders");
+			}
+			else
+			{
+				console.log("Error loading shaders");
+			}
+		};
+
+		// Trick to call function after async calls
+		linkShaders.pendingCount = 2;
+
+
+		fetch('shaders/vertex.vsh').then((response) => 
+		{
+			return response.text();
+		}).then((source) =>
 		{
 			vertexShader = self.buildShader(source, gl.VERTEX_SHADER);
-			if(vertexShader != undefined)
+			if(vertexShader)
 			{
 				console.log("Vertex shader successfully build.");
 			}
@@ -57,12 +124,16 @@ function Renderer()
 			{
 				console.log("Failed to build vertex shader.");
 			}
-		}, false);
-		
-		ajax.get("shaders/fragment.fsh", {}, function(source)
+			linkShaders();
+		});
+
+		fetch('shaders/fragment.fsh').then((response) => 
+		{
+			return response.text();
+		}).then((source) =>
 		{
 			fragmentShader = self.buildShader(source, gl.FRAGMENT_SHADER);
-			if(fragmentShader != undefined)
+			if(fragmentShader)
 			{
 				console.log("Fragment shader successfully build.");
 			}
@@ -70,57 +141,9 @@ function Renderer()
 			{
 				console.log("Failed to build fragment shader.");
 			}
-		}, false);
-		if( vertexShader != undefined && fragmentShader != undefined)
-		{
-			let shaderProgram = gl.createProgram();
-			gl.attachShader(shaderProgram, vertexShader);
-			gl.attachShader(shaderProgram, fragmentShader);
-			gl.linkProgram(shaderProgram);
-			
-			if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
-			{
-				window.alert("Error initing shader program");
-			}
-			gl.useProgram(shaderProgram);
-			
-			let positionVertex = gl.getAttribLocation(shaderProgram, "position");
-			gl.enableVertexAttribArray(positionVertex);
-			
-			let normalVertex = gl.getAttribLocation(shaderProgram, "normal");
-			gl.enableVertexAttribArray(normalVertex);
-			
-			let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
-			gl.enableVertexAttribArray(texcoord);
-			
-			let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
-			let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
-			let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
-			let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
-			let colorUniform = gl.getUniformLocation(shaderProgram, "color");
-			let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
-			let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
-			
-			
-			
-			return {program: shaderProgram,
-					positionVertex: positionVertex,
-					normalVertex: normalVertex,
-					texcoord: texcoord,
-					viewProjectionUniform: viewProjectionUniform,
-					modelViewUniform: modelViewUniform,
-					normalMatrixUniform: normalMatrixUniform,
-					lightPositionUniform: lightPositionUniform,
-					colorUniform: colorUniform,
-					useTextureUniform: useTextureUniform,
-					texSamplerUniform : texSamplerUniform
-					};
-		}
-		else
-		{
-			console.log("Error loading shaders");
-		}
-		return undefined;
+			linkShaders();
+		});
+
 	}
 
 	this.uploadBuffer = function(vertices)
@@ -256,24 +279,44 @@ function Renderer()
 		gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 	}
 
+	this.updateViewBounds = function()
+	{
+		let bounds = canvas.element.getBoundingClientRect();
+		
+		canvas.width = bounds.width;
+		canvas.height = bounds.height;
+
+		// canvas.element.width = bounds.width;
+		// canvas.element.height = bounds.height;
+	}
+
+	this.onResize = function()
+	{
+		if(canvas.element)
+		{
+			self.updateViewBounds();
+
+			if(mainShader)
+			{
+				self.draw();
+			}
+		}
+	}
+
 	this.load = function(canvasElement)
 	{
-		console.log(self);
 		canvas.element = canvasElement;
-		
-		let bounds = canvasElement.getBoundingClientRect();
-		
-		console.log(bounds);
-		
-		canvasElement.width = bounds.width;
-		canvasElement.height = bounds.height;
-		
-		canvas.width = canvasElement.width;
-		canvas.height = canvasElement.height;
 
 		gl = canvasElement.getContext("webgl");
+
+		self.updateViewBounds();
+
+		window.addEventListener("resize", (e)=>
+		{
+			self.onResize();
+		});
 		
-		mainShader = self.loadShaders();
+		self.loadShaders();
 		
 		gl.clearColor(0.5, 0.5, 0.5, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
