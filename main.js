@@ -22,8 +22,7 @@ function init()
 		renderer.setViewMatrix(viewMatrix);
 		renderer.draw(dt);
 	});
-	
-	
+
 	// Scene Controller
 	let sceneController = new SceneController();
 	

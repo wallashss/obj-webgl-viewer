@@ -145,7 +145,6 @@ function Renderer()
 
 			linkShaders();
 		});
-
 	}
 
 	this.uploadBuffer = function(vertices)
