@@ -15,7 +15,6 @@ function init()
 	renderer = new Renderer();
 	renderer.load(canvas);
 	
-	
 	// Initialize cameracontroller
 	let cameraController = new CameraController();
 	cameraController.installCamera(canvas, function(viewMatrix, dt)
@@ -61,39 +60,56 @@ function init()
 	{
 		let files = e.target.files;
 		var objreader = new ObjReader();
-
 		
 		if(files.length > 0)
 		{
-			let file = files[0];		
-			let reader = new FileReader();
-			
-			reader.onload = function(e)
+			for(let f = 0; f < files.length; f++)
 			{
-				let obj = objreader.readObjects(e.target.result);
+				let file = files[f];		
+				let reader = new FileReader();
 				
-				if(obj.needcalculateNormals)
+				reader.onload = function(e)
 				{
-					console.log("Calculating normals...");
-					calculateNormals(obj.vertices, obj.elements);
-					console.log("Done.");
-				}
+					if(file.name.endsWith(".lines"))
+					{
+						let lineArray = e.target.result.replace("\n", " ").split(" ");
+						let lines = [];
+						for(let i = 0; i < lineArray.length; i++)
+						{
+							lines.push(parseFloat(lineArray[i]));
+						}
+						sceneController.addMesh(lines, 3);
+						renderer.addLines(lines);
+					}
+					else
+					{
+						let obj = objreader.readObjects(e.target.result);
+					
+						if(obj.needcalculateNormals)
+						{
+							console.log("Calculating normals...");
+							calculateNormals(obj.vertices, obj.elements, true);
+							console.log("Done.");
+						}
+						
+						sceneController.addMesh(obj.vertices, 8);
+						if(obj.hasTexcoords)
+						{
+							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.8, 0.8, 0.8, 1.0), "default");
+						}
+						else
+						{
+							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.7, 0.7, 0, 1.0));
+						}
+					}
+									
+					goToCenter();
+					
+				};
 				
-				sceneController.addMesh(obj);
-				if(obj.hasTexcoords)
-				{
-					renderer.addObject(obj.vertices, obj.elements, "default");
-				}
-				else
-				{
-					renderer.addObject(obj.vertices, obj.elements);
-				}
-				
-				goToCenter();
-				
-			};
+				reader.readAsText(file);
+			}
 			
-			reader.readAsText(file);
 		}
 	});
 	
