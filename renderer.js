@@ -1,17 +1,17 @@
 // Global gl context... It is nice to debug.
 var gl = {};
 
-var TARGET_FPS = 60.0;
-var dt = 1.0 / TARGET_FPS;			 
+let TARGET_FPS = 60.0;
+let dt = 1.0 / TARGET_FPS;			 
 
 function Renderer()
 {
-	var self = this;
-	var mainShader = null;
-	var batches = [];
-	var lines = [];
-	var textureMap = {};
-	var canvas = {width: 0, 
+	let self = this;
+	let mainShader = null;
+	let batches = [];
+	let lines = [];
+	let textureMap = {};
+	let canvas = {width: 0, 
 				  height: 0, 
 				  element: undefined};
 	
@@ -19,12 +19,12 @@ function Renderer()
 	this.scale = vec3.fromValues(1.0, 1.0, 1.0);
 	this.rotation = mat4.create();
 	
-	var isAnimating = false;
+	let isAnimating = false;
 
 	let backgroundColor = {r: 0.5, g: 0.5, b: 0.5};
+	let dummyTexture = null;
 	
-	
-	var _viewMatrix = mat4.create();
+	let _viewMatrix = mat4.create();
 	
 	this.buildShader = function(source, type)
 	{
@@ -226,25 +226,28 @@ function Renderer()
 			
 			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
 			
+			gl.activeTexture(gl.TEXTURE0);
 			if(b.textureName && textureMap.hasOwnProperty(b.textureName))
 			{
-				gl.activeTexture(gl.TEXTURE0);
-				gl.uniform1f(mainShader.useTextureUniform, 1.0);
-				gl.bindTexture(gl.TEXTURE_2D, textureMap[b.textureName]);
 				gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+				gl.bindTexture(gl.TEXTURE_2D, textureMap[b.textureName]);
+				gl.uniform1f(mainShader.useTextureUniform, 1.0);
 			}
 			else
 			{
+				gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+				gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
 				gl.uniform1f(mainShader.useTextureUniform, 0.0);
 				gl.uniform4fv(mainShader.colorUniform, b.color);
 			}
 			
 			gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
 			
-			if(b.textureName != undefined)
-			{
-				gl.bindTexture(gl.TEXTURE_2D, null);
-			}
+			// if(b.textureName != undefined)
+			// {
+			// 	gl.bindTexture(gl.TEXTURE_2D, null);
+			// }
+			gl.bindTexture(gl.TEXTURE_2D, null);
 		}
 
 		gl.uniform1f(mainShader.unlitUniform, 1.0);		
@@ -272,9 +275,6 @@ function Renderer()
 		
 		canvas.width = bounds.width;
 		canvas.height = bounds.height;
-
-		// canvas.element.width = bounds.width;
-		// canvas.element.height = bounds.height;
 	}
 
 	this.onResize = function()
@@ -327,6 +327,28 @@ function Renderer()
 		// ], [0, 1, 2]);
 		
 		gl.enable(gl.DEPTH_TEST);
+		dummyTexture = gl.createTexture();
+		
+		// let textureId = gl.createTexture();
+		// // neheTexture.image = new Image();
+		// // neheTexture.image.onload = function() {
+		//   // handleLoadedTexture(neheTexture)
+		// // }
+		gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
+		// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+		// gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+		let dummyArray = [];
+		let dummySize = 4;
+		for(let i = 0; i < dummySize*dummySize; i++)
+		{
+			dummyArray.push(0);
+		}
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2,0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(dummyArray));
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.bindTexture(gl.TEXTURE_2D, null);
+		
 // 		self.draw();
 		// window.setInterval(self.draw, dt)
 	}
