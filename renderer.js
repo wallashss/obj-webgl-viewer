@@ -37,114 +37,64 @@ function Renderer()
 			console.log(gl.getShaderInfoLog(shader));
 			return undefined;
 		}
-		
 		return shader;
 	}
 
-	this.loadShaders = function()
+	this.loadShaders = function(vertexSource, fragmentSource)
 	{
-		let vertexShader;
-		let fragmentShader;
-
-		let linkShaders = () =>
+		vertexShader = self.buildShader(vertexSource, gl.VERTEX_SHADER);
+		fragmentShader = self.buildShader(fragmentSource, gl.FRAGMENT_SHADER);
+		if( vertexShader && fragmentShader )
 		{
-			// Trick to call function after async calls
-			linkShaders.pendingCount--;
-			if(linkShaders.pendingCount > 0)
-			{				
-				return;
-			}
-
-			if( vertexShader && fragmentShader )
+			let shaderProgram = gl.createProgram();
+			gl.attachShader(shaderProgram, vertexShader);
+			gl.attachShader(shaderProgram, fragmentShader);
+			gl.linkProgram(shaderProgram);
+			
+			if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
 			{
-				let shaderProgram = gl.createProgram();
-				gl.attachShader(shaderProgram, vertexShader);
-				gl.attachShader(shaderProgram, fragmentShader);
-				gl.linkProgram(shaderProgram);
-				
-				if(!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS))
-				{
-					window.alert("Error initing shader program");
-				}
-				gl.useProgram(shaderProgram);
-				
-				let positionVertex = gl.getAttribLocation(shaderProgram, "position");
-				gl.enableVertexAttribArray(positionVertex);
-				
-				let normalVertex = gl.getAttribLocation(shaderProgram, "normal");
-				gl.enableVertexAttribArray(normalVertex);
-				
-				let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
-				gl.enableVertexAttribArray(texcoord);
-				
-				let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
-				let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
-				let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
-				let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
-				let colorUniform = gl.getUniformLocation(shaderProgram, "color");
-				let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
-				let unlitUniform = gl.getUniformLocation(shaderProgram, "unlit");
-				let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
-				
-				mainShader = {program: shaderProgram,
-						positionVertex: positionVertex,
-						normalVertex: normalVertex,
-						texcoord: texcoord,
-						viewProjectionUniform: viewProjectionUniform,
-						modelViewUniform: modelViewUniform,
-						normalMatrixUniform: normalMatrixUniform,
-						lightPositionUniform: lightPositionUniform,
-						colorUniform: colorUniform,
-						useTextureUniform: useTextureUniform,
-						unlitUniform: unlitUniform,
-						texSamplerUniform : texSamplerUniform
-						};
-				console.log("succesfully loaded shaders");
+				window.alert("Error initing shader program");
 			}
-			else
-			{
-				console.log("Error loading shaders");
-			}
-		};
-
-		// Trick to call function after async calls
-		linkShaders.pendingCount = 2;
-
-
-		fetch('shaders/vertex.vsh').then((response) => 
+			gl.useProgram(shaderProgram);
+			
+			let positionVertex = gl.getAttribLocation(shaderProgram, "position");
+			gl.enableVertexAttribArray(positionVertex);
+			
+			let normalVertex = gl.getAttribLocation(shaderProgram, "normal");
+			gl.enableVertexAttribArray(normalVertex);
+			
+			let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
+			gl.enableVertexAttribArray(texcoord);
+			
+			let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
+			let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
+			let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
+			let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
+			let colorUniform = gl.getUniformLocation(shaderProgram, "color");
+			let useTextureUniform = gl.getUniformLocation(shaderProgram, "useTexture");
+			let unlitUniform = gl.getUniformLocation(shaderProgram, "unlit");
+			let texSamplerUniform = gl.getUniformLocation(shaderProgram, "texSampler");
+			
+			mainShader = {program: shaderProgram,
+					positionVertex: positionVertex,
+					normalVertex: normalVertex,
+					texcoord: texcoord,
+					viewProjectionUniform: viewProjectionUniform,
+					modelViewUniform: modelViewUniform,
+					normalMatrixUniform: normalMatrixUniform,
+					lightPositionUniform: lightPositionUniform,
+					colorUniform: colorUniform,
+					useTextureUniform: useTextureUniform,
+					unlitUniform: unlitUniform,
+					texSamplerUniform : texSamplerUniform
+					};
+			console.log("succesfully loaded shaders");
+		}
+		else
 		{
-			return response.text();
-		}).then((source) =>
-		{
-			vertexShader = self.buildShader(source, gl.VERTEX_SHADER);
-			if(vertexShader)
-			{
-				console.log("Vertex shader successfully build.");
-			}
-			else
-			{
-				console.log("Failed to build vertex shader.");
-			}
-			linkShaders();
-		});
-
-		fetch('shaders/fragment.fsh').then((response) => 
-		{
-			return response.text();
-		}).then((source) =>
-		{
-			fragmentShader = self.buildShader(source, gl.FRAGMENT_SHADER);
-			if(fragmentShader)
-			{
-				console.log("Fragment shader successfully build.");
-			}
-			else
-			{
-				console.log("Failed to build fragment shader.");
-			}
-
-			linkShaders();
-		});
+			console.log("Error loading shaders");
+		}
+		
 	}
 
 	this.uploadBuffer = function(vertices)
@@ -339,7 +289,7 @@ function Renderer()
 		}
 	}
 
-	this.load = function(canvasElement)
+	this.load = function(canvasElement, vertexSource, fragmentSource)
 	{
 		canvas.element = canvasElement;
 
@@ -352,7 +302,7 @@ function Renderer()
 			self.onResize();
 		});
 		
-		self.loadShaders();
+		self.loadShaders(vertexSource, fragmentSource);
 		
 		gl.clearColor(0.5, 0.5, 0.5, 1);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
