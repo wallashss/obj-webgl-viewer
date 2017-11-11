@@ -21,6 +21,7 @@ function Renderer()
 	
 	var isAnimating = false;
 
+	let backgroundColor = {r: 0.5, g: 0.5, b: 0.5};
 	
 	
 	var _viewMatrix = mat4.create();
@@ -287,6 +288,15 @@ function Renderer()
 				self.draw();
 			}
 		}
+	}
+
+	this.setBackgroundColor = function(r, g, b)
+	{
+		self.backgroundColor.r = r;
+		self.backgroundColor.g = g;
+		self.backgroundColor.b = b;
+
+		gl.clearColor(r, g, b, 1);
 	}
 
 	this.load = function(canvasElement, vertexSource, fragmentSource)
