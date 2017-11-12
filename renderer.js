@@ -1,5 +1,5 @@
 // Global gl context... It is nice to debug.
-var gl = {};
+var gl = null;
 
 let TARGET_FPS = 60.0;
 let dt = 1.0 / TARGET_FPS;			 
@@ -21,7 +21,7 @@ function Renderer()
 	
 	let isAnimating = false;
 
-	let backgroundColor = {r: 0.5, g: 0.5, b: 0.5};
+	let backgroundColor = {r: 0.5, g: 0.5, b: 0.5, a: 1.0};
 	let dummyTexture = null;
 	
 	let _viewMatrix = mat4.create();
@@ -148,7 +148,7 @@ function Renderer()
 					color: color});
 	}
 	
-	this.addTexture = function(textureName, texture)
+	this.addTexture = function(textureName, texture, isNearest)
 	{
 		let textureId = gl.createTexture();
 		// neheTexture.image = new Image();
@@ -158,8 +158,20 @@ function Renderer()
 		gl.bindTexture(gl.TEXTURE_2D, textureId);
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+
+		isNearest = (isNearest !== null && isNearest !== undefined) ? isNearest : false;
+
+		if(isNearest)
+		{
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		}
+		else
+		{
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+		}
+		
 		gl.bindTexture(gl.TEXTURE_2D, null);
 		
 		textureMap[textureName] = textureId;
@@ -171,7 +183,8 @@ function Renderer()
 	{
 		// Clear screen
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-				
+		
+		
 		if(batches.length == 0 && lines.length == 0)
 		{
 			return;
@@ -292,11 +305,15 @@ function Renderer()
 
 	this.setBackgroundColor = function(r, g, b)
 	{
-		self.backgroundColor.r = r;
-		self.backgroundColor.g = g;
-		self.backgroundColor.b = b;
+		backgroundColor.r = r;
+		backgroundColor.g = g;
+		backgroundColor.b = b;
 
-		gl.clearColor(r, g, b, 1);
+		if(gl)
+		{
+			gl.clearColor(r, g, b, 1);
+		}
+		
 	}
 
 	this.load = function(canvasElement, vertexSource, fragmentSource)
@@ -314,7 +331,7 @@ function Renderer()
 		
 		self.loadShaders(vertexSource, fragmentSource);
 		
-		gl.clearColor(0.5, 0.5, 0.5, 1);
+		gl.clearColor(backgroundColor.r, backgroundColor.g, backgroundColor.b, backgroundColor.a);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		
 		// gl.viewport(0, 0, 500, 100);
@@ -327,24 +344,16 @@ function Renderer()
 		// ], [0, 1, 2]);
 		
 		gl.enable(gl.DEPTH_TEST);
-		dummyTexture = gl.createTexture();
-		
-		// let textureId = gl.createTexture();
-		// // neheTexture.image = new Image();
-		// // neheTexture.image.onload = function() {
-		//   // handleLoadedTexture(neheTexture)
-		// // }
-		gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
-		// gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-		// gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
+		dummyTexture = gl.createTexture();
+		gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
 		let dummyArray = [];
 		let dummySize = 4;
 		for(let i = 0; i < dummySize*dummySize; i++)
 		{
 			dummyArray.push(0);
 		}
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2,0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(dummyArray));
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 2, 2, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(dummyArray));
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 		gl.bindTexture(gl.TEXTURE_2D, null);
