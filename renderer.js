@@ -151,10 +151,7 @@ function Renderer()
 	this.addTexture = function(textureName, texture, isNearest)
 	{
 		let textureId = gl.createTexture();
-		// neheTexture.image = new Image();
-		// neheTexture.image.onload = function() {
-		  // handleLoadedTexture(neheTexture)
-		// }
+
 		gl.bindTexture(gl.TEXTURE_2D, textureId);
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, texture);
@@ -177,6 +174,17 @@ function Renderer()
 		textureMap[textureName] = textureId;
 		
 		self.draw();
+	}
+
+	this.clearBatches = function()
+	{
+		for(let i = 0; i < batches.length; i++)
+		{
+			let b = batches[i];
+			gl.deleteBuffer(b.verticesBufferId);
+			gl.deleteBuffer(b.elementsBufferId);
+		}
+		batches = [];
 	}
 
 	this.draw = function()

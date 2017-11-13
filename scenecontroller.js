@@ -1,3 +1,5 @@
+"use strict";
+
 function SceneController()
 {
     var self = this;
@@ -7,6 +9,8 @@ function SceneController()
                     max: {x: -Number.MAX_VALUE, 
                          y: -Number.MAX_VALUE,
                          z: -Number.MAX_VALUE}};
+
+    
     this.addMesh = function(vertices, verticeSize)
     {
         let length = vertices.length / verticeSize;
@@ -42,6 +46,16 @@ function SceneController()
                 self.bounds.max.z = z;
             }
         }
+    }
+
+    this.reset = function()
+    {
+        self.bounds = {min: {x: Number.MAX_VALUE, 
+            y: Number.MAX_VALUE,
+            z: Number.MAX_VALUE},
+       max: {x: -Number.MAX_VALUE, 
+            y: -Number.MAX_VALUE,
+            z: -Number.MAX_VALUE}};
     }
     
     this.getCenter = function()
