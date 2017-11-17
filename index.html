@@ -21,7 +21,7 @@
 			attribute vec3 normal;
 			attribute vec2 texcoord;
 			
-			uniform highp mat4 viewProjection;
+			uniform highp mat4 modelViewProjection;
 			uniform highp mat4 modelView;
 			uniform highp mat4 normalMatrix;
 			
@@ -36,7 +36,7 @@
 			
 			void main (void)
 			{
-				gl_Position =  viewProjection * vec4(position, 1.0);
+				gl_Position =  modelViewProjection * vec4(position, 1.0);
 				
 				currentColor = color;
 			
@@ -101,7 +101,7 @@
 		</div>
 		<div id="view_controller">
 			<span>Upload obj</span>
-			<input id="obj_file" type="file" multiple>
+			<input id="obj_file" type="file" autocomplete="off" multiple>
 			<span>Upload texture</span>
 			<input id="img_file" type="file">
 			<span>Animate</span>

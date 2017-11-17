@@ -1,5 +1,7 @@
+"use strict"
+
 // Global gl context... It is nice to debug.
-var gl = null;
+let gl = null;
 
 let TARGET_FPS = 60.0;
 let dt = 1.0 / TARGET_FPS;			 
@@ -28,7 +30,7 @@ function Renderer()
 	
 	this.buildShader = function(source, type)
 	{
-		var shader = gl.createShader(type);
+		let shader = gl.createShader(type);
 		
 		gl.shaderSource(shader, source);
 		gl.compileShader(shader);
@@ -43,8 +45,8 @@ function Renderer()
 
 	this.loadShaders = function(vertexSource, fragmentSource)
 	{
-		vertexShader = self.buildShader(vertexSource, gl.VERTEX_SHADER);
-		fragmentShader = self.buildShader(fragmentSource, gl.FRAGMENT_SHADER);
+		let vertexShader = self.buildShader(vertexSource, gl.VERTEX_SHADER);
+		let fragmentShader = self.buildShader(fragmentSource, gl.FRAGMENT_SHADER);
 		if( vertexShader && fragmentShader )
 		{
 			let shaderProgram = gl.createProgram();
@@ -67,7 +69,7 @@ function Renderer()
 			let texcoord = gl.getAttribLocation(shaderProgram, "texcoord");
 			gl.enableVertexAttribArray(texcoord);
 			
-			let viewProjectionUniform = gl.getUniformLocation(shaderProgram, "viewProjection");
+			let modelViewProjection = gl.getUniformLocation(shaderProgram, "modelViewProjection");
 			let modelViewUniform = gl.getUniformLocation(shaderProgram, "modelView");
 			let normalMatrixUniform = gl.getUniformLocation(shaderProgram, "normalMatrix");
 			let lightPositionUniform = gl.getUniformLocation(shaderProgram, "lightPosition");
@@ -80,7 +82,7 @@ function Renderer()
 					positionVertex: positionVertex,
 					normalVertex: normalVertex,
 					texcoord: texcoord,
-					viewProjectionUniform: viewProjectionUniform,
+					modelViewProjectionUniform: modelViewProjection,
 					modelViewUniform: modelViewUniform,
 					normalMatrixUniform: normalMatrixUniform,
 					lightPositionUniform: lightPositionUniform,
@@ -100,40 +102,47 @@ function Renderer()
 
 	this.uploadBuffer = function(vertices)
 	{
-		var newBufferId = gl.createBuffer();
+		let newBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, newBufferId);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 		
 		return newBufferId;
 	}
 
-	this.addObject = function(vertices, elements, color, textureName)
+	this.addObject = function(vertices, elements, color, transform, textureName)
 	{
-		var verticesBufferId = gl.createBuffer();
+		let verticesBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
-		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);	
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+		let t = mat4.create();
+		if(transform)
+		{
+			mat4.copy(t, transform);
+		}
 		
 		if(!color)
 		{
 			color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
 		}
 		
-		var elementsBufferId = gl.createBuffer();
+		let elementsBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsBufferId);
 		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);	
 		
 		batches.push({verticesBufferId: verticesBufferId,
 				elementsBufferId: elementsBufferId,
+				transform: t,
 				count: elements.length,
 				color: color,
 				textureName: textureName});
 				
-		self.draw();
+		// self.draw();
 	}
 	
 	this.addLines = function(vertices, color)
 	{
-		var verticesBufferId = gl.createBuffer();
+		let verticesBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
 		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);	
 		
@@ -197,48 +206,47 @@ function Renderer()
 		{
 			return;
 		}
-		
-		// Matrices
-		let m = mat4.create();
-		let v = mat4.create();
-		let p = mat4.create();
-		let mv = mat4.create();
-		let mvp = mat4.create();
-		let normalMatrix = mat4.create();
-		
-		// Light in eye space and always at camera position
-		let eyeLightPosition = vec3.fromValues(0.0, 0.0, 0.0);
-		
-		// Model view projection
-		v = _viewMatrix;
-		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100000.0);
-		
-		mat4.fromScaling(m, self.scale);
-		mat4.multiply(m, self.rotation, m);
-		mat4.multiply(mv, v, m);
-		mat4.multiply(mvp, p, mv);
-
-		// Normal matrix
-		mat4.invert(normalMatrix, mv);
-		mat4.transpose(normalMatrix, normalMatrix);
 	
 		// Bind shader
-		var shaderProgram = mainShader.program;
+		let shaderProgram = mainShader.program;
 		gl.useProgram(shaderProgram);
-		// gl.enableVertexAttribArray(shaderProgram.positionVertex);	
-		// gl.uniform4fv(mainShader.colorUniform, [0.8, 0.8, 0.8, 1]);
-		gl.uniform1f(mainShader.unlitUniform, 0.0);
-		gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
-		gl.uniformMatrix4fv(mainShader.viewProjectionUniform, false, mvp);
-		gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
+		
+		// Eye light position 
+		let eyeLightPosition = vec3.fromValues(0.0, 0.0, 0.0);
 		gl.uniform3fv(mainShader.lightPositionUniform, eyeLightPosition);
-			
+		
+		gl.uniform1f(mainShader.unlitUniform, 0.0);
+		
+		let m = mat4.create();
+		let v = _viewMatrix;
+		let p = mat4.create();
+		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100000.0);
+		let mv = mat4.create();
+		let mvp = mat4.create();
 		for(let i = 0; i < batches.length; i++)
 		{
 			let b = batches[i];
+			// Matrices
+			mat4.copy(m, b.transform);
+			let normalMatrix = mat4.create();
+			
+			// Model view projection
+			mat4.scale(m, m, self.scale);
+			mat4.multiply(m, self.rotation, m);
+			mat4.multiply(mv, v, m);
+			mat4.multiply(mvp, p, mv);
+
+			// Normal matrix
+			mat4.invert(normalMatrix, mv);
+			mat4.transpose(normalMatrix, normalMatrix);
+
+			// Transforms
+			gl.uniformMatrix4fv(mainShader.modelViewUniform, false, mv);
+			gl.uniformMatrix4fv(mainShader.modelViewProjectionUniform, false, mvp);
+			gl.uniformMatrix4fv(mainShader.normalMatrixUniform, false, normalMatrix);
 			
 			// Vertex Size = (2 * (vertex & normal) + 2 * nom) * 3 components (x, y, z) * 4 bytes (float)
-			var vertexSize = (3 + 3 + 2) * 4;
+			let vertexSize = (3 + 3 + 2) * 4;
 			
 			gl.bindBuffer(gl.ARRAY_BUFFER, b.verticesBufferId);
 			gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, vertexSize, 0);
@@ -275,6 +283,10 @@ function Renderer()
 		for(let i =0 ; i < lines.length; i++)
 		{
 			let l = lines[i];
+
+			gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+			gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
+			gl.uniform1f(mainShader.useTextureUniform, 0.0);
 			
 			gl.bindBuffer(gl.ARRAY_BUFFER, l.verticesBufferId);
 			gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, l.vertexSize, 0);
@@ -328,7 +340,7 @@ function Renderer()
 	{
 		canvas.element = canvasElement;
 
-		gl = canvasElement.getContext("webgl");
+		gl = canvasElement.getContext("webgl2");
 
 		self.updateViewBounds();
 

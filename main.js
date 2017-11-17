@@ -147,11 +147,11 @@ function init()
 						sceneController.addMesh(obj.vertices, 8);
 						if(obj.hasTexcoords)
 						{
-							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.8, 0.8, 0.8, 1.0), "default");
+							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.8, 0.8, 0.8, 1.0), null, "default");
 						}
 						else
 						{
-							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.7, 0.7, 0, 1.0));
+							renderer.addObject(obj.vertices, obj.elements, vec4.fromValues(0.8, 0.8, 0.8, 1.0));
 						}
 					}
 									

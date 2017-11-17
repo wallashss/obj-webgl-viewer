@@ -2,8 +2,8 @@ attribute vec3 position;
 attribute vec3 normal;
 attribute vec2 texcoord;
 
-uniform highp mat4 viewProjection;
 uniform highp mat4 modelView;
+uniform highp mat4 modelViewProjection;
 uniform highp mat4 normalMatrix;
 
 uniform vec4 color;
@@ -17,7 +17,7 @@ varying vec2 vTexcoord;
 
 void main (void)
 {
-    gl_Position =  viewProjection * vec4(position, 1.0);
+    gl_Position =  modelViewProjection * vec4(position, 1.0);
 	
     currentColor = color;
 
