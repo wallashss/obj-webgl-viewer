@@ -13,9 +13,10 @@ function SceneController()
     
     this.addMesh = function(vertices, verticeSize)
     {
-        let length = vertices.length / verticeSize;
+        let length = parseInt(vertices.length / verticeSize);
         for(let i = 0; i < length; i++)
         {
+
             let x = vertices[i*verticeSize];
             let y = vertices[i*verticeSize+1];
             let z = vertices[i*verticeSize+2];
