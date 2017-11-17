@@ -183,17 +183,6 @@ function CameraController()
 			
 			window.addEventListener("keyup", function(e)
 			{
-				if(document.activeElement)
-				{
-					if(document.activeElement.tagName === "textarea" || document.activeElement.tagName === "input")
-					{
-						return;
-					}
-				}
-				if(element !== document.activeElement)
-				{
-					return;
-				}
 				if(e.key === "W" || e.key === "w" || e.key === "ArrowUp")
 				{
 					state.up = 0.0;
