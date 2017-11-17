@@ -121,10 +121,12 @@ function Renderer()
 			mat4.copy(t, transform);
 		}
 		
+		let c = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
 		if(!color)
 		{
-			color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
+			c = vec4.clone(color);
 		}
+
 		
 		let elementsBufferId = gl.createBuffer();
 		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsBufferId);
@@ -136,6 +138,34 @@ function Renderer()
 				count: elements.length,
 				color: color,
 				textureName: textureName});
+				
+		// self.draw();
+	}
+
+	this.addObjectInstances = function(vertices, elements, colors, instances, textureName)
+	{
+		let verticesBufferId = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, verticesBufferId);
+		gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+		
+		let elementsBufferId = gl.createBuffer();
+		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, elementsBufferId);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(elements), gl.STATIC_DRAW);	
+		
+		for(let i  =0 ; i < instances.length; i++)
+		{
+			let t = mat4.clone(instances[i]);
+			let c = vec4.clone(colors[i]);
+
+			batches.push({verticesBufferId: verticesBufferId,
+				elementsBufferId: elementsBufferId,
+				transform: t,
+				count: elements.length,
+				color: c,
+				textureName: textureName});
+		}
+		
 				
 		// self.draw();
 	}
@@ -223,6 +253,11 @@ function Renderer()
 		mat4.perspective(p, 45, canvas.width / canvas.height, 0.1, 100000.0);
 		let mv = mat4.create();
 		let mvp = mat4.create();
+		
+		let currentVertexBufferId = null;
+		let currentElementBufferId = null;
+		let currentTextureId = null;
+		gl.activeTexture(gl.TEXTURE0);
 		for(let i = 0; i < batches.length; i++)
 		{
 			let b = batches[i];
@@ -248,34 +283,45 @@ function Renderer()
 			// Vertex Size = (2 * (vertex & normal) + 2 * nom) * 3 components (x, y, z) * 4 bytes (float)
 			let vertexSize = (3 + 3 + 2) * 4;
 			
-			gl.bindBuffer(gl.ARRAY_BUFFER, b.verticesBufferId);
-			gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, vertexSize, 0);
-			gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, vertexSize, 3 * 4); // 3 components x 4 bytes per float		
-			gl.vertexAttribPointer(mainShader.texcoord, 2, gl.FLOAT, false, vertexSize, 3 * 4 + 3 * 4);
-			
-			gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
-			
-			gl.activeTexture(gl.TEXTURE0);
-			if(b.textureName && textureMap.hasOwnProperty(b.textureName))
+			if(currentVertexBufferId !== b.verticesBufferId)
 			{
-				gl.uniform1i(shaderProgram.texSamplerUniform, 0);
-				gl.bindTexture(gl.TEXTURE_2D, textureMap[b.textureName]);
-				gl.uniform1f(mainShader.useTextureUniform, 1.0);
+				gl.bindBuffer(gl.ARRAY_BUFFER, b.verticesBufferId);
+				gl.vertexAttribPointer(mainShader.positionVertex, 3, gl.FLOAT, false, vertexSize, 0);
+				gl.vertexAttribPointer(mainShader.normalVertex, 3, gl.FLOAT, false, vertexSize, 3 * 4); // 3 components x 4 bytes per float		
+				gl.vertexAttribPointer(mainShader.texcoord, 2, gl.FLOAT, false, vertexSize, 3 * 4 + 3 * 4);
+				currentVertexBufferId = b.verticesBufferId;
 			}
-			else
+			
+			if(currentElementBufferId !== b.elementsBufferId)
 			{
-				gl.uniform1i(shaderProgram.texSamplerUniform, 0);
-				gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
-				gl.uniform1f(mainShader.useTextureUniform, 0.0);
-				gl.uniform4fv(mainShader.colorUniform, b.color);
+				gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, b.elementsBufferId);
+				currentElementBufferId = b.elementsBufferId;
+			}
+			
+			if(b.textureName && textureMap.hasOwnProperty(b.textureName) )
+			{
+				let textureId = textureMap[b.textureName];
+				if(currentTextureId !== textureId)
+				{
+					gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+					gl.bindTexture(gl.TEXTURE_2D, textureId);
+					gl.uniform1f(mainShader.useTextureUniform, 1.0);
+					textureId = textureId;
+				}
+			}			
+			else 
+			{
+				if(currentTextureId !== dummyTexture)
+				{
+					gl.uniform1i(shaderProgram.texSamplerUniform, 0);
+					gl.bindTexture(gl.TEXTURE_2D, dummyTexture);
+					gl.uniform1f(mainShader.useTextureUniform, 0.0);
+					gl.uniform4fv(mainShader.colorUniform, b.color);
+					currentTextureId = dummyTexture;
+				}
 			}
 			
 			gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
-			
-			// if(b.textureName != undefined)
-			// {
-			// 	gl.bindTexture(gl.TEXTURE_2D, null);
-			// }
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}
 

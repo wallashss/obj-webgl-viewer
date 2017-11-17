@@ -21,31 +21,36 @@ function SceneController()
             let y = vertices[i*verticeSize+1];
             let z = vertices[i*verticeSize+2];
         
-            if(self.bounds.min.x > x)
-            {
-                self.bounds.min.x = x;
-            }
-            if(self.bounds.min.y > y)
-            {
-                self.bounds.min.y = y;
-            }
-            if(self.bounds.min.z > z)
-            {
-                self.bounds.min.z = z;
-            }
-            
-            if(self.bounds.max.x < x)
-            {
-                self.bounds.max.x = x;
-            }
-            if(self.bounds.max.y < y)
-            {
-                self.bounds.max.y = y;
-            }
-            if(self.bounds.max.z < z)
-            {
-                self.bounds.max.z = z;
-            }
+            self.expand(x, y, z);
+        }
+    }
+
+    this.expand = function(x, y, z)
+    {
+        if(self.bounds.min.x > x)
+        {
+            self.bounds.min.x = x;
+        }
+        if(self.bounds.min.y > y)
+        {
+            self.bounds.min.y = y;
+        }
+        if(self.bounds.min.z > z)
+        {
+            self.bounds.min.z = z;
+        }
+        
+        if(self.bounds.max.x < x)
+        {
+            self.bounds.max.x = x;
+        }
+        if(self.bounds.max.y < y)
+        {
+            self.bounds.max.y = y;
+        }
+        if(self.bounds.max.z < z)
+        {
+            self.bounds.max.z = z;
         }
     }
 
