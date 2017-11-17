@@ -36,7 +36,7 @@ function Examine()
             if(!epsilonEqual(state.yawIntensity, 0.0, EPSILON) || 
               !epsilonEqual(state.pitchIntensity, 0.0, EPSILON))
 			{
-				let pivot = vec3.fromValues(state.pivot[0], state.pivot[0], state.pivot[0]);
+				let pivot = vec3.fromValues(state.pivot[0], state.pivot[1], state.pivot[2]);
                 vec3.transformMat4(pivot, pivot, viewMatrix);
                 let tPivot = mat4.create();
                 mat4.translate(tPivot, tPivot, pivot);
