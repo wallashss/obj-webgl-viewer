@@ -322,7 +322,7 @@ function Renderer()
 			}
 			
 			gl.drawElements(gl.TRIANGLES, b.count, gl.UNSIGNED_SHORT, 0);
-			gl.bindTexture(gl.TEXTURE_2D, null);
+			
 		}
 
 		gl.uniform1f(mainShader.unlitUniform, 1.0);		
@@ -341,6 +341,7 @@ function Renderer()
 			
 			gl.drawArrays(gl.LINES, 0, l.count);
 		}
+		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 
 	this.bindShader = function(shaderProgram, object)
@@ -388,6 +389,16 @@ function Renderer()
 
 		gl = canvasElement.getContext("webgl2");
 
+		if(!gl)
+		{
+			gl = canvasElement.getContext("webgl");
+
+			if(!gl)
+			{
+				return false;
+			}
+		}
+
 		self.updateViewBounds();
 
 		window.addEventListener("resize", (e)=>
@@ -423,9 +434,8 @@ function Renderer()
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
 		gl.bindTexture(gl.TEXTURE_2D, null);
-		
-// 		self.draw();
-		// window.setInterval(self.draw, dt)
+
+		return true;
 	}
 	
 	
