@@ -73,7 +73,7 @@ function init()
 	});
 	
 	
-	// Initialize cameracontroller
+	// Initialize cameracontroller	
 	
 
 	// Scene Controller
