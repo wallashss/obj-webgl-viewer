@@ -1,0 +1,3 @@
+[submodule "webgl-renderer"]
+	path = webgl-renderer
+	url = https://github.com/wallashss/webgl-renderer.git

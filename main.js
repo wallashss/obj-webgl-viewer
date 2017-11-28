@@ -6,50 +6,6 @@ window.addEventListener("load", function()
 
 var renderer = undefined;
 
-function loadShadersSources(callback)
-{
-	let vertexScript = document.getElementById("vertex-shader");
-	let fragmentScript = document.getElementById("fragment-shader");
-	
-	if(vertexScript && fragmentScript)
-	{
-		callback(vertexScript.childNodes[0].nodeValue, fragmentScript.childNodes[0].nodeValue);
-		return;
-	}
-
-	let sources = {vertex: null, fragment: null};
-
-	let invokerCallback = () =>
-	{
-		invokerCallback.pending--;
-		if(invokerCallback.pending !== 0)
-		{
-			return;
-		}
-		callback(sources.vertex, sources.fragment);
-	};
-	invokerCallback.pending = 2;
-
-	// Else read from somewhere... should be used with index-debug
-	fetch('shaders/vertex.vsh').then((response) => 
-	{
-		return response.text();
-	}).then((source) =>
-	{
-		sources.vertex = source;
-		invokerCallback();
-	});
-
-	fetch('shaders/fragment.fsh').then((response) => 
-	{
-		return response.text();
-	}).then((source) =>
-	{
-		sources.fragment = source;
-		invokerCallback();
-	});
-}
-
 function init()
 {
 	let viewController = document.getElementById("view_controller");
@@ -57,24 +13,17 @@ function init()
 	// Init renderer	
 	let canvas = document.getElementById("canvas");
 
-	let cameraController = new CameraController();
+	let cameraController = new Camera();
 
-	loadShadersSources((vertexSource, fragmentSource)=>
-	{
-		renderer = new Renderer();
-		renderer.load(canvas, vertexSource, fragmentSource);
-
-		
-		cameraController.installCamera(canvas, function(viewMatrix, dt)
-		{
-			renderer.setViewMatrix(viewMatrix);
-			renderer.draw(dt);
-		});
-	});
-	
+	renderer = new Renderer();
+	renderer.load(canvas);
 	
 	// Initialize cameracontroller	
-	
+	cameraController.installCamera(canvas, function(viewMatrix, dt)
+	{
+		renderer.setViewMatrix(viewMatrix);
+		renderer.draw(dt);
+	});
 
 	// Scene Controller
 	let sceneController = new SceneController();
@@ -192,20 +141,4 @@ function init()
 		
 		reader.readAsDataURL(file);
 	});
-	
-	// let button = document.getElementById("animate_button");
-// 	button.addEventListener("click", function()
-// 	{
-// 		// UGLIEST EVER =D
-// 		if(button.value == "Start")
-// 		{
-// 			button.value = "Stop";
-// 			renderer.startAnimation();
-// 		}
-// 		else
-// 		{
-// 			button.value = "Start"; // =DDDDD
-// 			renderer.stopAnimation();
-// 		}
-// 	});
 }
